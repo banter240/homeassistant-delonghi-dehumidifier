@@ -1,8 +1,5 @@
 ignore: |
   .venv
-  testing_config
-  dist
-  node_modules
 
 rules:
   braces:

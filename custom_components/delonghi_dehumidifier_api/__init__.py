@@ -34,4 +34,4 @@ async def async_setup_entry(
 async def async_unload_entry(
     hass: HomeAssistant, entry: DeLonghiDehumidifierConfigEntry
 ) -> bool:
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return bool(await hass.config_entries.async_unload_platforms(entry, PLATFORMS))

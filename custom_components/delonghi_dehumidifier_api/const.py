@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 from datetime import timedelta
 from enum import Enum
-from typing import Final
+from typing import Any, Final
 
 from homeassistant.const import Platform
 
@@ -184,7 +184,7 @@ GIGYA_SESSION_EXPIRATION = 7884009
 CONSENT_SIGNATURE_PREFIX = "const consentObj2Sig = '"
 CONSENT_SIGNATURE_SUFFIX = "';"
 
-GIGYA_RISK_CONTEXT_BASE: Final[dict] = {
+GIGYA_RISK_CONTEXT_BASE: Final[dict[str, Any]] = {
     "b0": 4494,
     "b1": [0, 2, 2, 0],
     "b2": 2,

@@ -55,7 +55,7 @@ async def _auth_step(
         return None, {"base": "unknown"}
 
 
-class DeLonghiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class DeLonghiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg, unused-ignore]
     VERSION = CONFIG_FLOW_VERSION
 
     async def async_step_user(

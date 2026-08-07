@@ -3,12 +3,13 @@ name: "CodeQL"
 on:
   push:
     branches:
-      - main
-      - dev
-      - rc
+      - "main"
+      - "ai/squash"
+      - "dev"
+      - "rc"
   pull_request:
     branches:
-      - main
+      - "main"
   schedule:
     - cron: "29 1 * * 5"
 
@@ -25,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         language:
-          - python
+          - "python"
 
     steps:
       - name: Checkout repository

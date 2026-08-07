@@ -41,7 +41,9 @@ class SensorSpec:
     extra_attrs: Callable[[dict[str, Any]], dict[str, Any]] | None = None
 
 
-def _enum_key(reader: Callable[[dict[str, Any]], Enum | None]):
+def _enum_key(
+    reader: Callable[[dict[str, Any]], Enum | None],
+) -> Callable[[dict[str, Any]], str | None]:
     def _read(data: dict[str, Any]) -> str | None:
         value = reader(data)
         return None if value is None else value.name.lower()

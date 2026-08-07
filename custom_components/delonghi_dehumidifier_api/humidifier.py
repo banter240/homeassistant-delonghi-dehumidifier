@@ -44,7 +44,6 @@ class DehumidifierEntity(DelonghiEntity, HumidifierEntity):
     _attr_max_humidity = HUMIDITY_MAX
     _attr_min_humidity = HUMIDITY_MIN
     _attr_supported_features = HumidifierEntityFeature.MODES
-    _attr_available_modes = list(HUMIDIFIER_MODES)
 
     def __init__(self, coordinator: DelonghiCoordinator) -> None:
         super().__init__(
@@ -53,6 +52,7 @@ class DehumidifierEntity(DelonghiEntity, HumidifierEntity):
             object_id="unit",
             kind=ENTITY_KIND_DEHUMIDIFIER,
         )
+        self._attr_available_modes = list(HUMIDIFIER_MODES)
         self._attr_unique_id = humidifier_unique_id(
             coordinator.device_dsn, HUMIDIFIER_UNIQUE_ID_SUFFIX
         )

@@ -255,7 +255,7 @@ class AylaAuth:
         self._store_tokens(response)
         return self.access_token
 
-    def _store_tokens(self, data: dict) -> None:
+    def _store_tokens(self, data: dict[str, Any]) -> None:
         self.access_token = data["access_token"]
         self.refresh_token = data["refresh_token"]
         self.token_expiry = time.time() + int(data["expires_in"])

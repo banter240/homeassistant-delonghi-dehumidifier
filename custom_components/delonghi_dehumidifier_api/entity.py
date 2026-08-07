@@ -35,7 +35,7 @@ class DelonghiEntity(CoordinatorEntity[DelonghiCoordinator]):
 
     @property
     def client(self) -> APIClient:
-        return self.coordinator.client
+        return self.coordinator.client  # type: ignore[no-any-return, unused-ignore]
 
     @property
     def props(self) -> dict[str, Any]:

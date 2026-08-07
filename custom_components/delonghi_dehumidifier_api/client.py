@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import aiohttp
 
@@ -46,13 +47,13 @@ class APIClient:
         value = props.get(PROP_PRODUCT_NAME)
         return "" if value is None else str(value)
 
-    async def set_status(self, status: Status) -> dict:
+    async def set_status(self, status: Status) -> Any:
         return await self.set_datapoint(PROP_SET_STATUS, status.value)
 
-    async def set_humidity(self, value: int) -> dict:
+    async def set_humidity(self, value: int) -> Any:
         return await self.set_datapoint(PROP_HUMIDITY_SETPOINT, value)
 
-    async def set_mode(self, mode: Mode) -> dict:
+    async def set_mode(self, mode: Mode) -> Any:
         if mode == Mode.REAL_FEEL:
             return await self.set_datapoint(
                 PROP_ACTIVATE_REALFEEL, REAL_FEEL_ACTIVATION_PAYLOAD
@@ -60,20 +61,20 @@ class APIClient:
         await self.set_datapoint(PROP_ACTIVATE_REALFEEL, REAL_FEEL_IDLE_PAYLOAD)
         return await self.set_datapoint(PROP_DEVICE_MODE, mode.value)
 
-    async def set_swing(self, status: OffOnStatus) -> dict:
+    async def set_swing(self, status: OffOnStatus) -> Any:
         return await self.set_datapoint(PROP_SWING, status.value)
 
-    async def set_eco(self, status: OffOnStatus) -> dict:
+    async def set_eco(self, status: OffOnStatus) -> Any:
         return await self.set_datapoint(PROP_SET_ECO, status.value)
 
-    async def set_datapoint(self, property_name: str, value) -> dict:
+    async def set_datapoint(self, property_name: str, value: Any) -> Any:
         device_dsn = await self.get_first_device()
         return await self.post_request(
             path_datapoint(device_dsn, property_name),
             {"datapoint": {"value": value}},
         )
 
-    async def get_request(self, path: str) -> dict:
+    async def get_request(self, path: str) -> Any:
         access_token = await self._auth.get_access_token()
         response = await self.session.get(
             ads_url(path), headers=api_headers(access_token or "")
@@ -84,7 +85,7 @@ class APIClient:
             _LOGGER.error("Ayla GET %s failed HTTP %s: %s", path, status, payload)
         return payload
 
-    async def post_request(self, path: str, body: dict) -> dict:
+    async def post_request(self, path: str, body: dict[str, Any]) -> Any:
         access_token = await self._auth.get_access_token()
         response = await self.session.post(
             ads_url(path),
@@ -104,7 +105,7 @@ class APIClient:
         self.device_dsn = str(devices[FIRST_DEVICE_INDEX]["device"]["dsn"])
         return self.device_dsn
 
-    async def fetch_properties(self) -> list:
+    async def fetch_properties(self) -> list[Any]:
         device_dsn = await self.get_first_device()
         device_properties = await self.get_request(path_properties(device_dsn))
         return [

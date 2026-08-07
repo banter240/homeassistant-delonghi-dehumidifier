@@ -1,4 +1,8 @@
-# Reusable: ruff + yamllint + mypy
+# Reusable GitHub Actions workflow for static analysis, including:
+# - Linting with Ruff
+# - Format check with Ruff
+# - YAML linting with yamllint
+# - Static Type Checking with MyPy
 
 name: "Lint & Type-Check"
 
@@ -8,16 +12,16 @@ on:
 jobs:
   static-analysis:
     name: "Run Linter and Type Checker"
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout the repository"
-        uses: actions/checkout@v5
+        uses: "actions/checkout@v5"
 
       - name: "Set up Python"
-        uses: actions/setup-python@v5
+        uses: "actions/setup-python@v5"
         with:
           python-version: "3.14"
-          cache: pip
+          cache: "pip"
 
       - name: "Install requirements"
         run: python3 -m pip install -r requirements.txt
@@ -32,4 +36,4 @@ jobs:
         run: python3 -m yamllint .
 
       - name: "Run MyPy Type Checker"
-        run: python3 -m mypy custom_components
+        run: python3 -m mypy .

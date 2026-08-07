@@ -42,7 +42,7 @@ from ..const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def props_from_list(raw: list) -> dict[str, Any]:
+def props_from_list(raw: list[Any]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for item in raw:
         if not item:
@@ -65,12 +65,12 @@ def get_int(data: dict[str, Any], name: str) -> int | None:
     return int(value)
 
 
-def get_mapped(
+def get_mapped[T](
     data: dict[str, Any],
     name: str,
-    mapping: dict,
-    default=None,
-):
+    mapping: dict[int, T],
+    default: T | None = None,
+) -> T:
     value = get_int(data, name)
     if value is None:
         if default is not None:

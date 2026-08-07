@@ -1,107 +1,105 @@
-"""Adds dehumidifer entity for each dehumidifer appliance."""
+"""Humidifier platform."""
 
-from datetime import timedelta
-import logging
 from typing import Any
 
 from homeassistant.components.humidifier import HumidifierDeviceClass, HumidifierEntity
 from homeassistant.components.humidifier.const import HumidifierEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .client import MODE_BY_NAME, APIClient, Mode, Status
-from .const import DOMAIN
-from .utils import fetch_device_info
-
-_LOGGER = logging.getLogger(__name__)
-
-SCAN_INTERVAL = timedelta(minutes=1)
+from .const import (
+    ENTITY_KIND_DEHUMIDIFIER,
+    HUMIDIFIER_MODES,
+    HUMIDIFIER_UNIQUE_ID_SUFFIX,
+    HUMIDITY_MAX,
+    HUMIDITY_MIN,
+    MODE_BY_KEY,
+    Mode,
+    Status,
+)
+from .coordinator import DelonghiCoordinator
+from .entity import DelonghiEntity, async_setup_platform_entities
+from .helpers import properties as props
+from .helpers.device import humidifier_unique_id
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry[APIClient],
+    config_entry: ConfigEntry[DelonghiCoordinator],
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up current environment dehumidifier entity."""
+    def build(coordinator: DelonghiCoordinator) -> list[DehumidifierEntity]:
+        return [DehumidifierEntity(coordinator)]
 
-    client = config_entry.runtime_data
-    device_info = await fetch_device_info(client)
-    device_dsn = await client.get_first_device()
-    async_add_entities([DehumidifierEntity(device_dsn, device_info, client)])
+    await async_setup_platform_entities(config_entry, async_add_entities, build)
 
 
-class DehumidifierEntity(HumidifierEntity):
-    """Dehumidifer entity for DeLonghi dehumidifier."""
-
-    _attr_should_poll = True
-    _attr_has_entity_name = True
+class DehumidifierEntity(DelonghiEntity, HumidifierEntity):
     _attr_entity_category = EntityCategory.CONFIG
     _attr_device_class = HumidifierDeviceClass.DEHUMIDIFIER
-    _attr_max_humidity = 100
-    _attr_min_humidity = 0
+    _attr_translation_key = "unit"
+    _attr_max_humidity = HUMIDITY_MAX
+    _attr_min_humidity = HUMIDITY_MIN
     _attr_supported_features = HumidifierEntityFeature.MODES
-    _attr_available_modes = [
-        Mode.DEHUMIDIFY.name,
-        Mode.DRY_CLOTHES.name,
-        Mode.PURIFIER.name,
-    ]
+    _attr_available_modes = list(HUMIDIFIER_MODES)
 
-    def __init__(
-        self,
-        device_dsn: str,
-        device_info: DeviceInfo,
-        client: APIClient,
-    ) -> None:
-        """Initialize."""
-        self.client = client
-        self._attr_unique_id = f"{DOMAIN}_{device_dsn}_dehumidifier"
-        self._attr_name = "Unit"
-        self._attr_device_info = device_info
-        _LOGGER.debug("Initialized %s", self._attr_unique_id)
-
-    async def async_added_to_hass(self) -> None:
-        await self.async_update()
-
-    async def async_update(self) -> None:
-        """Handle the event when the device status changes."""
-        _LOGGER.debug("Updating %s", self._attr_unique_id)
-        device_mode = await self.client.get_device_mode()
-        self._attr_mode = device_mode.name
-        self._attr_target_humidity = await self.client.get_humidity_setpoint()
-        self._attr_current_humidity = await self.client.get_current_humidity()
-        device_status = await self.client.get_device_status()
-        self._attr_is_on = device_status == Status.ON
-        _LOGGER.debug(
-            "Updated %s with %s",
-            self._attr_unique_id,
-            {
-                "mode": self._attr_mode,
-                "target_humidity": self._attr_target_humidity,
-                "current_humidity": self._attr_current_humidity,
-                "is_on": self._attr_is_on,
-            },
+    def __init__(self, coordinator: DelonghiCoordinator) -> None:
+        super().__init__(
+            coordinator,
+            translation_key="unit",
+            object_id="unit",
+            kind=ENTITY_KIND_DEHUMIDIFIER,
         )
+        self._attr_unique_id = humidifier_unique_id(
+            coordinator.device_dsn, HUMIDIFIER_UNIQUE_ID_SUFFIX
+        )
+        self._cloud_status = Status.OFF.value
+        self._apply_data()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._apply_data()
+        self.async_write_ha_state()
+
+    def _apply_data(self) -> None:
+        data = self.props
+        status = props.device_status(data)
+        mode = props.device_mode(data)
+        self._attr_mode = mode.name.lower()
+        self._attr_current_humidity = props.current_humidity(data)
+        self._attr_is_on = status is Status.ON
+        self._cloud_status = status.value
+        if mode is Mode.REAL_FEEL:
+            self._attr_target_humidity = None
+        else:
+            self._attr_target_humidity = props.humidity_setpoint(data)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, int]:
+        return {"cloud_status": self._cloud_status}
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn the entity on."""
-        _LOGGER.debug("Turning on %s", self._attr_unique_id)
         await self.client.set_status(Status.ON)
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the entity off."""
-        _LOGGER.debug("Turning off %s", self._attr_unique_id)
         await self.client.set_status(Status.OFF)
+        await self.coordinator.async_request_refresh()
 
     async def async_set_mode(self, mode: str) -> None:
-        """Set new target mode."""
-        _LOGGER.debug("Setting mode %s mode to %s", self._attr_unique_id, mode)
-        await self.client.set_mode(MODE_BY_NAME.get(mode))
+        mapped = MODE_BY_KEY.get(mode.lower())
+        if mapped is None:
+            return
+        await self.client.set_mode(mapped)
+        await self.coordinator.async_request_refresh()
 
     async def async_set_humidity(self, humidity: int) -> None:
-        """Set new target humidity."""
-        _LOGGER.debug("Setting humidity %s mode to %s", self._attr_unique_id, humidity)
+        if props.device_mode(self.props) is Mode.REAL_FEEL:
+            raise ServiceValidationError(
+                "Humidity setpoint is not available in Real Feel mode"
+            )
         await self.client.set_humidity(humidity)
+        await self.coordinator.async_request_refresh()

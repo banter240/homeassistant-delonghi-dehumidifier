@@ -1,0 +1,36 @@
+[tool.mypy]
+platform = "linux"
+python_version = "3.14"
+follow_imports = "normal"
+ignore_missing_imports = true
+explicit_package_bases = true
+check_untyped_defs = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+exclude = ["testing_config/", "dev/"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["B", "C", "E", "F", "W", "I", "UP", "PL", "RUF"]
+ignore = [
+    "E501",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004",
+    "RUF012",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"custom_components/delonghi_dehumidifier_api/**/*.py" = ["PLC0415"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components.delonghi_dehumidifier_api"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 25

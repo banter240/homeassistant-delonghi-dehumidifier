@@ -1,0 +1,35 @@
+# Reusable: ruff + yamllint + mypy
+
+name: "Lint & Type-Check"
+
+on:
+  workflow_call:
+
+jobs:
+  static-analysis:
+    name: "Run Linter and Type Checker"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout the repository"
+        uses: actions/checkout@v5
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: "Install requirements"
+        run: python3 -m pip install -r requirements.txt
+
+      - name: "Run Ruff Linter"
+        run: python3 -m ruff check .
+
+      - name: "Run Ruff Formatter"
+        run: python3 -m ruff format --check .
+
+      - name: "Run yamllint"
+        run: python3 -m yamllint .
+
+      - name: "Run MyPy Type Checker"
+        run: python3 -m mypy custom_components

@@ -1,0 +1,11 @@
+# Embedded DeLonghi/Ayla app OAuth constants are reverse-engineered from the
+# official app (not user secrets). Same approach as other IoT HA clients.
+title = "delonghi-dehumidifier"
+
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+  '''custom_components/delonghi_dehumidifier_api/const\.py''',
+]

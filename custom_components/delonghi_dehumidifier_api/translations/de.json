@@ -1,0 +1,131 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "language": "Sprache",
+          "email": "E-Mail",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ungültige Anmeldedaten",
+      "unknown": "Unerwarteter Fehler"
+    },
+    "abort": {
+      "already_configured": "Gerät ist bereits konfiguriert"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "language": "Sprache",
+          "email": "E-Mail",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ungültige Anmeldedaten",
+      "unknown": "Unerwarteter Fehler"
+    }
+  },
+  "entity": {
+    "humidifier": {
+      "unit": {
+        "name": "Gerät",
+        "state_attributes": {
+          "mode": {
+            "state": {
+              "dehumidify": "Entfeuchten",
+              "dry_clothes": "Wäsche trocknen",
+              "purifier": "Luftreiniger",
+              "real_feel": "Real Feel"
+            }
+          }
+        }
+      }
+    },
+    "binary_sensor": {
+      "water_tank": {
+        "name": "Wassertank"
+      }
+    },
+    "switch": {
+      "eco_mode": {
+        "name": "Eco-Modus"
+      },
+      "swing_mode": {
+        "name": "Schwenken"
+      }
+    },
+    "sensor": {
+      "current_humidity": {
+        "name": "Aktuelle Luftfeuchtigkeit"
+      },
+      "target_humidity": {
+        "name": "Ziel-Luftfeuchtigkeit"
+      },
+      "current_speed": {
+        "name": "Aktuelle Geschwindigkeit"
+      },
+      "filter_status": {
+        "name": "Filterstatus",
+        "state": {
+          "ok": "OK",
+          "attention": "Achtung",
+          "needs_replacement": "Austausch nötig"
+        }
+      },
+      "alarm_state": {
+        "name": "Alarm",
+        "state": {
+          "ok": "OK",
+          "tank": "Wassertank",
+          "unknown": "Unbekannt"
+        }
+      },
+      "room_temperature": {
+        "name": "Raumtemperatur"
+      },
+      "heat_exchanger_temperature": {
+        "name": "Wärmetauscher-Temperatur"
+      },
+      "device_mode": {
+        "name": "Gerätemodus",
+        "state": {
+          "dehumidify": "Entfeuchten",
+          "dry_clothes": "Wäsche trocknen",
+          "purifier": "Luftreiniger",
+          "real_feel": "Real Feel"
+        }
+      },
+      "eco_mode": {
+        "name": "Eco-Modus",
+        "state": {
+          "on": "An",
+          "off": "Aus"
+        }
+      },
+      "swing_mode": {
+        "name": "Schwenken",
+        "state": {
+          "on": "An",
+          "off": "Aus"
+        }
+      },
+      "filter_change_alarm": {
+        "name": "Filterwechsel-Alarm",
+        "state": {
+          "on": "An",
+          "off": "Aus"
+        }
+      },
+      "filter_life": {
+        "name": "Filterlebensdauer"
+      }
+    }
+  }
+}

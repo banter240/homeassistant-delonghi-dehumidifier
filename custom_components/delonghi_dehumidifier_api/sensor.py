@@ -1,12 +1,10 @@
-"""Platform for sensor integration."""
+"""Sensor platform."""
 
 from __future__ import annotations
 
-from collections.abc import Callable, Coroutine
-from datetime import timedelta
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
-import logging
-import re
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -22,215 +20,170 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .client import APIClient, FilterStatus, Mode, OffOnStatus, Status
-from .const import DOMAIN
-from .utils import fetch_device_info
+from .const import ALARM_LABELS, ENTITY_KIND_SENSOR, FilterStatus, Mode, OffOnStatus
+from .coordinator import DelonghiCoordinator
+from .entity import DelonghiEntity, async_setup_platform_entities
+from .helpers import properties as props
 
-_LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(minutes=1)
+@dataclass(frozen=True, slots=True)
+class SensorSpec:
+    translation_key: str
+    reader: Callable[[dict[str, Any]], Any]
+    device_class: SensorDeviceClass | None = None
+    state_class: SensorStateClass | None = None
+    unit: str | None = None
+    enum_type: type[Enum] | None = None
+    options: tuple[str, ...] | None = None
+    extra_attrs: Callable[[dict[str, Any]], dict[str, Any]] | None = None
+
+
+def _enum_key(reader: Callable[[dict[str, Any]], Enum | None]):
+    def _read(data: dict[str, Any]) -> str | None:
+        value = reader(data)
+        return None if value is None else value.name.lower()
+
+    return _read
+
+
+def _alarm_extra(data: dict[str, Any]) -> dict[str, Any]:
+    raw = props.alarm_state(data)
+    return {"alarm_code": raw}
+
+
+SENSOR_SPECS: tuple[SensorSpec, ...] = (
+    SensorSpec(
+        "current_humidity",
+        props.current_humidity,
+        SensorDeviceClass.HUMIDITY,
+        SensorStateClass.MEASUREMENT,
+        PERCENTAGE,
+    ),
+    SensorSpec(
+        "target_humidity",
+        props.humidity_setpoint,
+        SensorDeviceClass.HUMIDITY,
+        SensorStateClass.MEASUREMENT,
+        PERCENTAGE,
+    ),
+    SensorSpec(
+        "current_speed",
+        props.current_speed,
+        SensorDeviceClass.SPEED,
+        SensorStateClass.MEASUREMENT,
+        UnitOfSpeed.METERS_PER_SECOND,
+    ),
+    SensorSpec(
+        "filter_status",
+        _enum_key(props.filter_status),
+        SensorDeviceClass.ENUM,
+        enum_type=FilterStatus,
+    ),
+    SensorSpec(
+        "alarm_state",
+        props.alarm_state_label,
+        SensorDeviceClass.ENUM,
+        options=ALARM_LABELS,
+        extra_attrs=_alarm_extra,
+    ),
+    SensorSpec(
+        "room_temperature",
+        props.room_temp,
+        SensorDeviceClass.TEMPERATURE,
+        SensorStateClass.MEASUREMENT,
+        UnitOfTemperature.CELSIUS,
+    ),
+    SensorSpec(
+        "heat_exchanger_temperature",
+        props.heat_exchanger_temp,
+        SensorDeviceClass.TEMPERATURE,
+        SensorStateClass.MEASUREMENT,
+        UnitOfTemperature.CELSIUS,
+    ),
+    SensorSpec(
+        "device_mode",
+        _enum_key(props.device_mode),
+        SensorDeviceClass.ENUM,
+        enum_type=Mode,
+    ),
+    SensorSpec(
+        "eco_mode",
+        _enum_key(props.eco),
+        SensorDeviceClass.ENUM,
+        enum_type=OffOnStatus,
+    ),
+    SensorSpec(
+        "swing_mode",
+        _enum_key(props.swing),
+        SensorDeviceClass.ENUM,
+        enum_type=OffOnStatus,
+    ),
+    SensorSpec(
+        "filter_change_alarm",
+        _enum_key(props.filter_change_alarm),
+        SensorDeviceClass.ENUM,
+        enum_type=OffOnStatus,
+    ),
+    SensorSpec(
+        "filter_life",
+        props.get_filter_life_days,
+        SensorDeviceClass.DURATION,
+        SensorStateClass.MEASUREMENT,
+        UnitOfTime.DAYS,
+    ),
+)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry[APIClient],
+    config_entry: ConfigEntry[DelonghiCoordinator],
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up current environment dehumidifier entity."""
+    def build(coordinator: DelonghiCoordinator) -> list[GenericSensor]:
+        return [GenericSensor(coordinator, spec) for spec in SENSOR_SPECS]
 
-    client = config_entry.runtime_data
-    device_info = await fetch_device_info(client)
-    device_dsn = await client.get_first_device()
-    async_add_entities(
-        [
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Current Humidity",
-                client.get_current_humidity,
-                SensorDeviceClass.HUMIDITY,
-                state_class=SensorStateClass.MEASUREMENT,
-                unit_of_measurement=PERCENTAGE,
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Target Humidity",
-                client.get_humidity_setpoint,
-                SensorDeviceClass.HUMIDITY,
-                state_class=SensorStateClass.MEASUREMENT,
-                unit_of_measurement=PERCENTAGE,
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Current Speed",
-                client.get_current_speed,
-                SensorDeviceClass.SPEED,
-                state_class=SensorStateClass.MEASUREMENT,
-                unit_of_measurement=UnitOfSpeed.METERS_PER_SECOND,
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Filter Status",
-                get_and_extract_enum_name(client.get_filter_status),
-                SensorDeviceClass.ENUM,
-                options=[status.name for status in FilterStatus],
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Room Temperature",
-                client.get_room_temp,
-                SensorDeviceClass.TEMPERATURE,
-                state_class=SensorStateClass.MEASUREMENT,
-                unit_of_measurement=UnitOfTemperature.FAHRENHEIT,
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Heat Exchanger Temperature",
-                client.get_heat_exchanger_temp,
-                SensorDeviceClass.TEMPERATURE,
-                state_class=SensorStateClass.MEASUREMENT,
-                unit_of_measurement=UnitOfTemperature.FAHRENHEIT,
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Device Mode",
-                get_and_extract_enum_name(client.get_device_mode),
-                SensorDeviceClass.ENUM,
-                options=[mode.name for mode in Mode],
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Device Status",
-                get_and_extract_enum_name(client.get_device_status),
-                SensorDeviceClass.ENUM,
-                options=[mode.name for mode in Status],
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Eco Mode",
-                get_and_extract_enum_name(client.get_eco),
-                SensorDeviceClass.ENUM,
-                options=[status.name for status in OffOnStatus],
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Swing Mode",
-                get_and_extract_enum_name(client.get_swing),
-                SensorDeviceClass.ENUM,
-                options=[status.name for status in OffOnStatus],
-            ),
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Filter Change Alarm",
-                get_and_extract_enum_name(client.get_filter_change_alarm),
-                SensorDeviceClass.ENUM,
-                options=[status.name for status in OffOnStatus],
-            ),
-            # TODO: Fix units
-            GenericSensor(
-                device_dsn,
-                device_info,
-                client,
-                "Filter Life",
-                client.get_filter_life,
-                SensorDeviceClass.DURATION,
-                state_class=SensorStateClass.MEASUREMENT,
-                unit_of_measurement=UnitOfTime.DAYS,
-            ),
-        ]
-    )
+    await async_setup_platform_entities(config_entry, async_add_entities, build)
 
 
-def get_and_extract_enum_name(
-    get_current_value: Callable[[], Coroutine[Any, Any, Enum]],
-) -> Callable[[], Coroutine[Any, Any, str]]:
-    """Wrap a Callable that returns an Awaitable[Enum], and returns a Callable returning an Awaitable[str] with the enum name."""
-
-    async def wrapper() -> str:
-        mode = await get_current_value()
-        return mode.name
-
-    return wrapper
-
-
-class GenericSensor(SensorEntity):
-    """Current environment humidity sensor."""
-
-    _attr_should_poll = True
-    _attr_has_entity_name = True
+class GenericSensor(DelonghiEntity, SensorEntity):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(
-        self,
-        device_dsn: str,
-        device_info: DeviceInfo,
-        client: APIClient,
-        type_name: str,
-        get_value: Callable[[], Coroutine[Any, Any, Any]],
-        device_class: SensorDeviceClass,
-        state_class: SensorStateClass | None = None,
-        unit_of_measurement: str | None = None,
-        options: list[str] | None = None,
-    ) -> None:
-        """Initialize."""
-        self.client = client
-        self._attr_unique_id = (
-            f"{DOMAIN}_{device_dsn}_{re.sub(r'\s+', '_', type_name.lower())}_sensor"
+    def __init__(self, coordinator: DelonghiCoordinator, spec: SensorSpec) -> None:
+        super().__init__(
+            coordinator,
+            translation_key=spec.translation_key,
+            object_id=spec.translation_key,
+            kind=ENTITY_KIND_SENSOR,
         )
-        self._attr_name = type_name
-        self._attr_device_info = device_info
-        self._get_value = get_value
-        self._attr_device_class = device_class
-        self._attr_state_class = state_class
-        self._attr_native_unit_of_measurement = unit_of_measurement
-        self._attr_options = options
-        _LOGGER.debug("Initialized %s", self._attr_unique_id)
+        self._spec = spec
+        if spec.options is not None:
+            self._attr_options = list(spec.options)
+        elif spec.enum_type is not None:
+            self._attr_options = [m.name.lower() for m in spec.enum_type]
+        self._attr_device_class = spec.device_class
+        self._attr_state_class = spec.state_class
+        self._attr_native_unit_of_measurement = spec.unit
+        self._extra_attrs: dict[str, Any] = {}
+        self._apply_data()
 
-    async def async_added_to_hass(self) -> None:
-        """Call when the entity is added to Home Assistant."""
-        await self.async_update()
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        return self._extra_attrs or None
 
-    async def async_update(self):
-        """Update the sensor's state.
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._apply_data()
+        self.async_write_ha_state()
 
-        This method fetches the current humidity from the client and updates the
-        sensor's native value with the retrieved humidity. It also logs the current
-        humidity value for debugging purposes.
-
-        Returns:
-            None
-
-        """
-        self._attr_native_value = await self._get_value()
-        _LOGGER.debug(
-            "Updated %s with %s",
-            self._attr_unique_id,
-            {
-                "value": self._attr_native_value,
-            },
-        )
+    def _apply_data(self) -> None:
+        try:
+            self._attr_native_value = self._spec.reader(self.props)
+        except TypeError, ValueError, KeyError:
+            self._attr_native_value = None
+        if self._spec.extra_attrs is not None:
+            self._extra_attrs = self._spec.extra_attrs(self.props)
+        else:
+            self._extra_attrs = {}

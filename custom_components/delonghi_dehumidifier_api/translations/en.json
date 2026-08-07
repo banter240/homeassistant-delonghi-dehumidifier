@@ -3,33 +3,33 @@
     "step": {
       "user": {
         "data": {
-          "language": "[%key:common::config_flow::data::language%]",
-          "email": "[%key:common::config_flow::data::email%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "language": "Language",
+          "email": "Email",
+          "password": "Password"
         }
       }
     },
     "error": {
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "Device is already configured"
     }
   },
   "options": {
     "step": {
       "init": {
         "data": {
-          "language": "[%key:common::config_flow::data::language%]",
-          "email": "[%key:common::config_flow::data::email%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "language": "Language",
+          "email": "Email",
+          "password": "Password"
         }
       }
     },
     "error": {
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
     }
   },
   "entity": {

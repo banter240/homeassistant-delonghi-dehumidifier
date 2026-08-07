@@ -1,0 +1,98 @@
+name: Bug Report
+description: Something isn't working as expected
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before You Submit
+        - Check [existing issues](https://github.com/banter240/homeassistant-delonghi-dehumidifier/issues).
+        - Check the [Troubleshooting](https://github.com/banter240/homeassistant-delonghi-dehumidifier#troubleshooting) section in the README.
+
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      description: HACS or `custom_components/delonghi_dehumidifier_api/manifest.json` → `version`
+      placeholder: "e.g. 0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      description: Settings → System → About
+      placeholder: "e.g. 2025.2.4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Installation method
+      options:
+        - HACS - stable release
+        - HACS - pre-release / dev channel
+        - Manual (copied files)
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Device model
+      description: As shown in the DeLonghi app / HA device info
+      placeholder: "e.g. DDSX220 / Tasciugo Aria"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Settings → System → Logs — search for `delonghi_dehumidifier_api`.
+
+        For more detail:
+        ```yaml
+        logger:
+          logs:
+            custom_components.delonghi_dehumidifier_api: debug
+        ```
+        Prefer full log lines including `Ayla properties dump` / `alarm_state` for cloud issues.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+    validations:
+      required: false

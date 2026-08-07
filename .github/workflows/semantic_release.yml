@@ -1,0 +1,62 @@
+# CI on push + semantic-release (main / rc / dev)
+
+name: "CI & Release"
+
+on:
+  push:
+    branches:
+      - main
+      - rc
+      - dev
+
+jobs:
+  linting:
+    name: "Run Linter"
+    uses: ./.github/workflows/lint.yml
+
+  validation:
+    name: "Run Validation"
+    uses: ./.github/workflows/validate.yml
+
+  semantic_release:
+    name: "Create Semantic Release"
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/rc' || github.ref == 'refs/heads/dev'
+    needs: [linting, validation]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: "Checkout full repository history"
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+      - name: "Setup Node.js environment"
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: "Install semantic-release and required plugins"
+        run: |
+          npm install --save-dev \
+            semantic-release \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            @semantic-release/git \
+            @semantic-release/github \
+            conventional-changelog-conventionalcommits
+
+      - name: "Execute Semantic Release"
+        id: semantic
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+      - name: "Output release information"
+        run: |
+          echo "New release version: ${{ steps.semantic.outputs.new_release_version }}"
+          echo "New release notes: ${{ steps.semantic.outputs.new_release_notes }}"

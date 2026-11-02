@@ -1,3 +1,16 @@
+## [1.1.0-dev.1](https://github.com/banter240/homeassistant-delonghi-dehumidifier/compare/v1.0.0...v1.1.0-dev.1) (2026-11-02)
+
+### ✨ New Features
+
+* feat: add configurable poll interval, diagnostics export, and native reauth flow
+
+  - Configurable cloud poll interval via options (default 30s, clamped 15-600s)
+  - diagnostics.py: entry + device diagnostics with credential redaction
+  - Native reauth via ConfigEntryAuthFailed + reauth_confirm step
+  - New AuthError exception for clean auth failure signaling
+  - Unique ID based on email to prevent duplicate accounts
+  - German translations for options and reauth dialogs
+
 ## 1.0.0 (2026-08-07)
 * feat(core): rewrite integration with coordinator, tank, Real Feel, and tado-style CI
 

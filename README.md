@@ -86,7 +86,7 @@ Requires a DeLonghi Comfort cloud account (EU Ayla/Gigya).
 
 - Only the **first** device on the cloud account is controlled.
 - Tank **full** and tank **missing/unseated** share the same cloud signal (`alarm_state == 3`, magnetic float).
-- Cloud poll interval is **20 seconds** (one properties request for all entities).
+- Cloud poll interval defaults to **30 seconds** (one properties request for all entities); changeable under **Configure** (options) as `poll_interval` (15–600 s).
 
 ## Entities
 

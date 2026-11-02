@@ -71,12 +71,12 @@ homeassistant = ">=2026.3"
 [tool.poetry.group.dev.dependencies]
 pytest = "9.1.1"
 pytest-cov = "7.1.0"
-pytest-homeassistant-custom-component = "0.13.345"
+pytest-homeassistant-custom-component = "0.13.361"
 
 # Recommended development tools:
-ruff = "0.15.20"
-mypy = "2.1.0"
-pre-commit = "4.6.0"
+ruff = "0.16.5"
+mypy = "2.3.1"
+pre-commit = "4.6.2"
 yamllint = "1.38.0"
 
 [build-system]

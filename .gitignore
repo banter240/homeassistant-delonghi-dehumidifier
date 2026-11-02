@@ -162,6 +162,9 @@ delonghi_dehumidifier_api.zip
 # Temporary files
 .old/*
 
+# Node (semantic-release CI tooling)
+node_modules/
+
 # Local testing directory
 testing_config/
 

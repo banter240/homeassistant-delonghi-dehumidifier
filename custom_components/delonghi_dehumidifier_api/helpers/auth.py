@@ -50,6 +50,10 @@ from .urls import get_query_param, url_encode
 _LOGGER = logging.getLogger(__name__)
 
 
+class AuthError(RuntimeError):
+    """Authentication with the DeLonghi cloud failed."""
+
+
 class AylaAuth:
     def __init__(
         self,
@@ -62,21 +66,17 @@ class AylaAuth:
         self.language = language
         self.email = email
         self.password = password
-        self.refresh_token: str | None = None
-        self.access_token: str | None = None
+        self.refresh_token: str = ""
+        self.access_token: str = ""
         self.token_expiry = time.time()
 
     async def get_access_token(self) -> str | None:
-        if (
-            self.access_token is not None
-            and self.access_token != ""
-            and self.token_expiry > time.time()
-        ):
+        if self.access_token and self.token_expiry > time.time():
             return self.access_token
         return await self._refresh_or_login()
 
     async def _refresh_or_login(self) -> str | None:
-        if self.refresh_token is None or self.refresh_token == "":
+        if not self.refresh_token:
             return await self._full_login()
         return await self._refresh_access_token()
 
@@ -98,7 +98,7 @@ class AylaAuth:
         self._store_tokens(data)
         return self.access_token
 
-    async def _full_login(self) -> str | None:
+    async def _full_login(self) -> str:
         headers = browser_headers()
 
         params = {
@@ -167,7 +167,7 @@ class AylaAuth:
                 or response.get("statusReason")
                 or response,
             )
-            return None
+            raise AuthError("Gigya login failed (no sessionInfo)")
 
         login_token = response["sessionInfo"]["login_token"]
 

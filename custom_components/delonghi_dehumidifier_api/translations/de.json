@@ -7,6 +7,15 @@
           "email": "E-Mail",
           "password": "Passwort"
         }
+      },
+      "reauth_confirm": {
+        "title": "Integration erneut anmelden",
+        "description": "Die gespeicherten Zugangsdaten sind nicht mehr gültig. Bitte gib die aktuellen DeLonghi-Zugangsdaten ein.",
+        "data": {
+          "language": "Sprache",
+          "email": "E-Mail",
+          "password": "Passwort"
+        }
       }
     },
     "error": {
@@ -14,16 +23,23 @@
       "unknown": "Unerwarteter Fehler"
     },
     "abort": {
-      "already_configured": "Gerät ist bereits konfiguriert"
+      "already_configured": "Gerät ist bereits konfiguriert",
+      "reauth_successful": "Erneute Anmeldung erfolgreich"
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "DeLonghi-Optionen",
+        "description": "Zugangsdaten und Cloud-Poll-Intervall. Längere Intervalle entlasten die Cloud (und ggf. das Gerät).",
         "data": {
           "language": "Sprache",
           "email": "E-Mail",
-          "password": "Passwort"
+          "password": "Passwort",
+          "poll_interval": "Poll-Intervall (Sekunden)"
+        },
+        "data_description": {
+          "poll_interval": "Wie oft Home Assistant die Properties aus der DeLonghi/Ayla-Cloud holt (Standard 30, min. 15, max. 600)."
         }
       }
     },

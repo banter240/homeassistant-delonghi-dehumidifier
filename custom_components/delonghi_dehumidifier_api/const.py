@@ -12,8 +12,13 @@ from homeassistant.const import Platform
 DOMAIN = "delonghi_dehumidifier_api"
 MANUFACTURER = "DeLonghi"
 
-POLL_INTERVAL_SECONDS = 20
-SCAN_INTERVAL = timedelta(seconds=POLL_INTERVAL_SECONDS)
+# Cloud poll interval (options; changeable after setup). Higher = gentler on the unit/cloud.
+CONF_POLL_INTERVAL = "poll_interval"
+DEFAULT_POLL_INTERVAL_SECONDS = 30
+MIN_POLL_INTERVAL_SECONDS = 15
+MAX_POLL_INTERVAL_SECONDS = 600
+# Legacy alias for code that still expects a timedelta default
+SCAN_INTERVAL = timedelta(seconds=DEFAULT_POLL_INTERVAL_SECONDS)
 
 DEFAULT_LANGUAGE = "en"
 CONFIG_FLOW_VERSION = 1
@@ -147,7 +152,7 @@ API_KEY = "3_e5qn7USZK-QtsIso1wCelqUKAK_IVEsYshRIssQ-X-k55haiZXmKWDHDRul2e5Y2"
 CLIENT_ID = "1S8q1WJEs-emOB43Z0-66WnL"
 CLIENT_SECRET = "lmnceiD0B-4KPNN5ZS6WuWU70j9V5BCuSlz2OPsvHkyLryhMkJkPvKsivfTq3RfNYj8GpCELtOBvhaDIzKcBtg"
 AUTHORIZATION_HEADER = (
-    "Basic " + base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
+    f"Basic {base64.b64encode(f'{CLIENT_ID}:{CLIENT_SECRET}'.encode()).decode()}"
 )
 APP_ID = "DeLonghiComfort2-mw-id"
 APP_SECRET = "DeLonghiComfort2-Yg4miiqiNcf0Or-EhJwRh7ACfBY"

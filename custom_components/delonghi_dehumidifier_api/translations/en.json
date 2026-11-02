@@ -7,6 +7,15 @@
           "email": "Email",
           "password": "Password"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate integration",
+        "description": "Your stored credentials are no longer valid. Enter your current DeLonghi account credentials.",
+        "data": {
+          "language": "Language",
+          "email": "Email",
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -14,16 +23,23 @@
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Device is already configured",
+      "reauth_successful": "Successfully reauthenticated"
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "DeLonghi Options",
+        "description": "Account credentials and cloud polling interval. Longer intervals reduce load on the cloud and device.",
         "data": {
           "language": "Language",
           "email": "Email",
-          "password": "Password"
+          "password": "Password",
+          "poll_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "poll_interval": "How often Home Assistant fetches properties from the DeLonghi/Ayla cloud (default 30s, minimum 15s, maximum 600s)."
         }
       }
     },

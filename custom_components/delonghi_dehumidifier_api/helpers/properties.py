@@ -47,8 +47,7 @@ def props_from_list(raw: list[Any]) -> dict[str, Any]:
     for item in raw:
         if not item:
             continue
-        name = item.get("name")
-        if name:
+        if name := item.get("name"):
             result[name] = item.get("value")
     return result
 
@@ -60,9 +59,7 @@ def get_str(data: dict[str, Any], name: str) -> str:
 
 def get_int(data: dict[str, Any], name: str) -> int | None:
     value = data.get(name)
-    if value is None:
-        return None
-    return int(value)
+    return None if value is None else int(value)
 
 
 def get_mapped[T](
@@ -86,16 +83,12 @@ def get_mapped[T](
 
 def get_temp_celsius(data: dict[str, Any], name: str) -> float | None:
     raw = get_int(data, name)
-    if raw is None:
-        return None
-    return raw / TEMP_TENTHS_DIVISOR
+    return None if raw is None else raw / TEMP_TENTHS_DIVISOR
 
 
 def get_filter_life_days(data: dict[str, Any]) -> float | None:
     raw = get_int(data, PROP_FILTER_LIFE)
-    if raw is None:
-        return None
-    return round(raw / FILTER_LIFE_MINUTES_PER_DAY, 1)
+    return None if raw is None else round(raw / FILTER_LIFE_MINUTES_PER_DAY, 1)
 
 
 def product_name(data: dict[str, Any]) -> str:

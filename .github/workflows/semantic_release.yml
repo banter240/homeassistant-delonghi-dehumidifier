@@ -1,0 +1,56 @@
+# Main release workflow. This orchestrates quality checks and the automated
+# release process using semantic-release.
+
+name: "CI & Release"
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'rc'
+      - 'dev'
+
+jobs:
+  # -- Prerequisite Job: Validation --
+  validation:
+    name: "Run Validation"
+    uses: ./.github/workflows/validate.yml
+
+  # -- Main Release Job --
+  # This job runs only after validation succeeds.
+  semantic_release:
+    name: "Create Semantic Release"
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/rc' || github.ref == 'refs/heads/dev'
+    needs: [validation]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: "Checkout full repository history"
+        uses: "actions/checkout@v7"
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+      - name: "Setup Node.js environment"
+        uses: "actions/setup-node@v7"
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: "Install semantic-release and required plugins"
+        run: npm ci
+
+      - name: "Execute Semantic Release"
+        id: semantic
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+      - name: "Output release information"
+        run: |
+          echo "New release version: ${{ steps.semantic.outputs.new_release_version }}"
+          echo "New release notes: ${{ steps.semantic.outputs.new_release_notes }}"

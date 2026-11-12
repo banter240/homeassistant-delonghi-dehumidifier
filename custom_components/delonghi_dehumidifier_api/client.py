@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import logging
+import re
 import time
 import urllib.parse
 from collections.abc import Callable, Iterable, Iterator
@@ -474,6 +475,15 @@ def property_records(items: Iterable[object]) -> Iterator[dict[str, object]]:
 def _auth_status_error(status: int) -> HomeAssistantError:
     return HomeAssistantError(
         f"Unexpected DeLonghi authentication response (HTTP {status})"
+    )
+
+
+def extract_consent_signature(html: str) -> str:
+    """Read the consent signature regardless of the page's string quoting."""
+    if match := re.search(r"consentObj2Sig\s*=\s*(['\"])(.*?)\1", html):
+        return match[2]
+    raise HomeAssistantError(
+        "Unexpected DeLonghi consent page (signature marker not found)"
     )
 
 
@@ -1187,7 +1197,7 @@ class APIClient:
             self.session.get(url, headers=headers, params=params, allow_redirects=False)
         )
 
-        signature = response.split("const consentObj2Sig = '")[1].split("';")[0]
+        signature = extract_consent_signature(response)
 
         # Step 6: Authorization
         url = f"https://fidm.eu1.gigya.com/oidc/op/v1.0/{API_KEY}/authorize/continue"
@@ -1334,9 +1344,12 @@ class APIClient:
         if allow_redirects:
             raise ValueError("Device command redirects are not supported")
         guard = self.device_write_guard() if self.device_write_guard else nullcontext()
-        async with guard, self.session.post(
-            url, headers=headers, json=body, allow_redirects=False
-        ) as response:
+        async with (
+            guard,
+            self.session.post(
+                url, headers=headers, json=body, allow_redirects=False
+            ) as response,
+        ):
             return await self._read_response(response)
 
     async def get_devices(self) -> list[str]:

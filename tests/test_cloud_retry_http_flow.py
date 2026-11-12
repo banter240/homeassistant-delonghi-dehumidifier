@@ -114,7 +114,7 @@ class FakeCloud:
         elif "socialize.getIDs" in url:
             response = self.response(body={"ucid": "u", "gmid": "g", "gmidTicket": "t"})
         elif "OIDCConsentPage.php" in url:
-            response = self.response(body="const consentObj2Sig = 'signature';")
+            response = self.response(body='const consentObj2Sig = "signature";')
         else:
             raise AssertionError(f"Unexpected GET: {url}")
         return FakeRequest(response)

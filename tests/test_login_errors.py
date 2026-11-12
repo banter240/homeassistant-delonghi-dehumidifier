@@ -135,7 +135,7 @@ async def test_successful_authentication_passes_login_token_to_provider():
                 ),
                 Response(
                     status=200,
-                    text=AsyncMock(return_value="const consentObj2Sig = 'signature';"),
+                    text=AsyncMock(return_value='const consentObj2Sig = "signature";'),
                 ),
                 Response(
                     status=302,

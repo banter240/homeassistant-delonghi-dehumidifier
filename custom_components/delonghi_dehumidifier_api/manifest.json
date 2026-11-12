@@ -1,13 +1,19 @@
 {
   "domain": "delonghi_dehumidifier_api",
   "name": "DeLonghi Dehumidifier (API)",
-  "after_dependencies": ["network", "logger", "logbook"],
-  "codeowners": ["@rtfpessoa"],
+  "after_dependencies": [
+    "network",
+    "logger",
+    "logbook"
+  ],
+  "codeowners": [
+    "@rtfpessoa"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/rtfpessoa/homeassistant-delonghi-dehumidifier/blob/main/README.md",
   "integration_type": "device",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/rtfpessoa/homeassistant-delonghi-dehumidifier/issues",
   "requirements": [],
-  "version": "0.3.0"
+  "version": "0.3.1-dev.1"
 }

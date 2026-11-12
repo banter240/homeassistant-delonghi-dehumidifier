@@ -145,6 +145,12 @@ class DehumidifierEntity(AuthAvailabilityEntity, HumidifierEntity):
         self.client = client
         self._attr_unique_id = f"{DOMAIN}_{device_dsn}_dehumidifier"
         self._attr_device_info = device_info
+        # HA reads state_attributes before the first successful poll;
+        # leave the control state unknown instead of crashing on unset attributes.
+        self._attr_mode = None
+        self._attr_is_on = None
+        self._attr_current_humidity = None
+        self._attr_target_humidity = None
         self._poll_generation = 0
         self._completed_poll_generation = 0
         self._refresh_handle: asyncio.Handle | None = None

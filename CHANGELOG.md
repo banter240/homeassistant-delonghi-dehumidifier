@@ -1,3 +1,17 @@
+## [0.4.0-dev.1](https://github.com/banter240/homeassistant-delonghi-dehumidifier/compare/v0.3.1-dev.2...v0.4.0-dev.1) (2026-11-13)
+
+### ✨ New Features
+
+* feat(options): let users space out cloud property reads
+
+  The client refreshed its shared property snapshot at least every
+  10 seconds. Expose the minimum spacing as an optional field in the
+  account options and reconfigure forms (10-600 seconds), clamping
+  stored values at setup. Entities keep polling once a minute; a
+  higher value serves them cached data and reduces cloud requests.
+  The default keeps the existing behaviour so Real Feel command
+  confirmations are unaffected.
+
 ## [0.3.1-dev.2](https://github.com/banter240/homeassistant-delonghi-dehumidifier/compare/v0.3.1-dev.1...v0.3.1-dev.2) (2026-11-12)
 
 ### 🐛 Bug Fixes

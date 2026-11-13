@@ -62,6 +62,8 @@ hash when reporting an issue with a branch installation. See the
 
 To change account settings, open **Settings > Devices & services**, open the appliance entry menu and choose **Reconfigure**. **Configure** opens the same form. Enter the account language, email and current password for an account that can access the same appliance.
 
+The same form also offers an optional **Minimum seconds between cloud updates**. Entities still poll once a minute, but a higher value reuses the appliance's cached cloud state between polls and reduces requests to the De'Longhi cloud (allowed range 10–600 seconds; the default matches the integration's existing behaviour).
+
 Each entry remains bound to its selected device. Changing credentials or the
 account language requires that the same device is accessible to the new account.
 Devices shared with an account may be read-only; a denied command is reported

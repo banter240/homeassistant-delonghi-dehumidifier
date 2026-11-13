@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Mapping
+from typing import Any
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry, OperationNotAllowed
@@ -28,7 +30,14 @@ from .client import (
     TransientCloudError,
     usable_dsn,
 )
-from .const import DOMAIN, RUNTIME_REAUTH_ID
+from .const import (
+    CONF_POLL_INTERVAL,
+    DEFAULT_POLL_CACHE_SECONDS,
+    DOMAIN,
+    MAX_POLL_CACHE_SECONDS,
+    MIN_POLL_CACHE_SECONDS,
+    RUNTIME_REAUTH_ID,
+)
 from .identity import (
     CONF_DSN,
     CONF_ENROLLMENT,
@@ -129,6 +138,15 @@ async def async_migrate_entry(
     return entry.version == 2
 
 
+def poll_cache_seconds(settings: Mapping[str, Any]) -> float:
+    """Clamp the configured minimum spacing between cloud property reads."""
+    try:
+        seconds = float(settings.get(CONF_POLL_INTERVAL, DEFAULT_POLL_CACHE_SECONDS))
+    except (TypeError, ValueError):
+        return DEFAULT_POLL_CACHE_SECONDS
+    return min(MAX_POLL_CACHE_SECONDS, max(MIN_POLL_CACHE_SECONDS, seconds))
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: DeLonghiDehumidifierConfigEntry
 ) -> bool:
@@ -199,7 +217,13 @@ async def async_setup_entry(
     password = settings[CONF_PASSWORD]
 
     session = aiohttp_client.async_get_clientsession(hass)
-    client = APIClient(session, language, email, password)
+    client = APIClient(
+        session,
+        language,
+        email,
+        password,
+        properties_cache_seconds=poll_cache_seconds(settings),
+    )
     setup_complete = False
     platforms_may_be_loaded = False
     try:

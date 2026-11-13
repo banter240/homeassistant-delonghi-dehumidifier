@@ -62,12 +62,15 @@ async def test_setup_and_options_labels_and_errors(hass, flow_type, failure, exp
 
     translations = await async_get_translations(hass, "en", flow_type, [DOMAIN])
     step = result["step_id"]
-    assert {str(field) for field in result["data_schema"].schema} == {
+    expected_fields = {
         CONF_LANGUAGE,
         CONF_EMAIL,
         CONF_PASSWORD,
     }
-    for field in (CONF_LANGUAGE, CONF_EMAIL, CONF_PASSWORD):
+    if flow_type == "options":
+        expected_fields.add("poll_interval")
+    assert {str(field) for field in result["data_schema"].schema} == expected_fields
+    for field in expected_fields:
         text = translations[f"{PREFIX}.{flow_type}.step.{step}.data.{field}"]
         assert text and "[%key:" not in text
 

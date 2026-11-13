@@ -71,12 +71,14 @@
         "data": {
           "language": "Sprache des De'Longhi-Kontos",
           "email": "E-Mail-Adresse",
-          "password": "Passwort"
+          "password": "Passwort",
+          "poll_interval": "Mindestsekunden zwischen Cloud-Updates"
         },
         "data_description": {
           "language": "Sprachcode, der bei der Anmeldung an De'Longhi gesendet wird.",
           "email": "Das Konto muss Zugriff auf das bereits ausgewählte Gerät haben.",
-          "password": "Gib das aktuelle Passwort für dieses Konto ein."
+          "password": "Gib das aktuelle Passwort für dieses Konto ein.",
+          "poll_interval": "Wie oft die Integration den Gerätezustand aus der De'Longhi-Cloud lesen darf. Entities pollen weiterhin jede Minute; höhere Werte nutzen zwischengespeicherte Daten und reduzieren Cloud-Anfragen (10–600 Sekunden)."
         }
       }
     },

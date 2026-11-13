@@ -30,7 +30,13 @@ from .client import (
     TransientCloudError,
     usable_dsn,
 )
-from .const import DOMAIN, RUNTIME_REAUTH_ID
+from .const import (
+    CONF_POLL_INTERVAL,
+    DOMAIN,
+    MAX_POLL_CACHE_SECONDS,
+    MIN_POLL_CACHE_SECONDS,
+    RUNTIME_REAUTH_ID,
+)
 from .identity import (
     CONF_DSN,
     CONF_ENROLLMENT,
@@ -432,6 +438,12 @@ class _AccountEdit:
                     vol.Required(CONF_LANGUAGE, default=settings[CONF_LANGUAGE]): str,
                     vol.Required(CONF_EMAIL, default=settings[CONF_EMAIL]): str,
                     vol.Required(CONF_PASSWORD): str,
+                    vol.Optional(CONF_POLL_INTERVAL): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(
+                            min=MIN_POLL_CACHE_SECONDS, max=MAX_POLL_CACHE_SECONDS
+                        ),
+                    ),
                 }
             ),
             errors=errors,
@@ -458,6 +470,8 @@ class _AccountEdit:
         options = {
             key: value for key, value in self.options.items() if key not in updates
         }
+        if (interval := settings.get(CONF_POLL_INTERVAL)) is not None:
+            options[CONF_POLL_INTERVAL] = interval
         # An eager update listener can unload itself before async_update_entry returns.
         reload_listener = _async_update_options in self.entry.update_listeners
         changed = entries.async_update_entry(

@@ -71,12 +71,14 @@
         "data": {
           "language": "De'Longhi account language",
           "email": "Email",
-          "password": "Password"
+          "password": "Password",
+          "poll_interval": "Minimum seconds between cloud updates"
         },
         "data_description": {
           "language": "Language code sent to De'Longhi when signing in.",
           "email": "The account must have access to the appliance selected for this entry.",
-          "password": "Enter the current password for this account."
+          "password": "Enter the current password for this account.",
+          "poll_interval": "How often the integration may read the appliance state from the De'Longhi cloud. Entities still poll every minute; higher values reuse cached data and reduce cloud requests (10–600 seconds)."
         }
       }
     },

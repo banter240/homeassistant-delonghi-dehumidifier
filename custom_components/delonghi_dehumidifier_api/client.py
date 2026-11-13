@@ -19,7 +19,12 @@ import aiohttp
 from homeassistant.exceptions import HomeAssistantError
 
 from .action_refresh import ActionRefresh
-from .const import DOMAIN, REAL_FEEL_ACTIVATION_PAYLOAD, REAL_FEEL_DEACTIVATION_PAYLOAD
+from .const import (
+    DEFAULT_POLL_CACHE_SECONDS,
+    DOMAIN,
+    REAL_FEEL_ACTIVATION_PAYLOAD,
+    REAL_FEEL_DEACTIVATION_PAYLOAD,
+)
 from .humidifier_commands import HumidifierCommands
 
 # API Docs: https://docs.aylanetworks.com/reference
@@ -536,13 +541,20 @@ class APIClient:
     """Client for interacting with the DeLonghi dehumidifier API."""
 
     def __init__(
-        self, session: aiohttp.ClientSession, language: str, email: str, password: str
+        self,
+        session: aiohttp.ClientSession,
+        language: str,
+        email: str,
+        password: str,
+        *,
+        properties_cache_seconds: float = DEFAULT_POLL_CACHE_SECONDS,
     ) -> None:
         """Initialize."""
         self.language = language
         self.email = email
         self.password = password
         self.session = session
+        self.properties_cache_seconds = properties_cache_seconds
         self.refresh_token: str | None = None
         self.access_token: str | None = None
         self.token_expiry = time.time()
@@ -1430,8 +1442,8 @@ class APIClient:
     async def get_properties(self) -> list[object]:
         """Retrieve the properties of the device.
 
-        This method fetches the device properties from the API if they have not been
-        retrieved in the last 10 seconds. If the properties were retrieved recently,
+        This method fetches the device properties from the API if they have not
+        been retrieved recently. If the properties were retrieved recently,
         it returns the cached properties.
 
         Returns:
@@ -1443,7 +1455,7 @@ class APIClient:
         if (
             self.device_properties is not None
             and self.device_properties_timestamp is not None
-            and now - self.device_properties_timestamp < 10
+            and now - self.device_properties_timestamp < self.properties_cache_seconds
         ):
             return self.device_properties
 

@@ -17,6 +17,7 @@ from pytest_homeassistant_custom_component.common import (
     MockConfigEntry as LegacyConfigEntry,
 )
 
+from custom_components.delonghi_dehumidifier_api import poll_cache_seconds
 from custom_components.delonghi_dehumidifier_api.client import (
     APIClient,
     CloudPermissionDeniedError,
@@ -24,7 +25,7 @@ from custom_components.delonghi_dehumidifier_api.client import (
     NoDevicesError,
     TransientCloudError,
 )
-from custom_components.delonghi_dehumidifier_api.const import DOMAIN
+from custom_components.delonghi_dehumidifier_api.const import CONF_POLL_INTERVAL, DOMAIN
 from custom_components.delonghi_dehumidifier_api.identity import (
     CONF_DSN,
     ISSUE_PREFIX,
@@ -399,3 +400,56 @@ async def test_unchanged_edit_reloads_once(hass, mock_client, kind):
         await hass.async_block_till_done()
     reload_entry.assert_awaited_once_with(entry.entry_id)
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize("kind", ["reconfigure", "options"])
+async def test_account_edit_can_space_out_cloud_reads(hass, mock_client, kind):
+    entry = MockConfigEntry(domain=DOMAIN, data=ORIGINAL)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    manager, form = await open_account_form(hass, entry, kind)
+    with pytest.raises(vol.Invalid):
+        form["data_schema"]({**UPDATED, CONF_POLL_INTERVAL: 9})
+    with pytest.raises(vol.Invalid):
+        form["data_schema"]({**UPDATED, CONF_POLL_INTERVAL: 601})
+    result = await manager.async_configure(
+        form["flow_id"], user_input={**UPDATED, CONF_POLL_INTERVAL: 120}
+    )
+    await hass.async_block_till_done()
+    if kind == "reconfigure":
+        assert result["type"] == "abort"
+    else:
+        assert result["type"] == "create_entry"
+    assert entry.options[CONF_POLL_INTERVAL] == 120
+    assert entry.runtime_data.properties_cache_seconds == 120
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize("kind", ["reconfigure", "options"])
+async def test_account_edit_without_interval_keeps_default(hass, mock_client, kind):
+    entry = MockConfigEntry(domain=DOMAIN, data=ORIGINAL)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.runtime_data.properties_cache_seconds == 10
+    manager, form = await open_account_form(hass, entry, kind)
+    await manager.async_configure(form["flow_id"], user_input=UPDATED)
+    await hass.async_block_till_done()
+    assert CONF_POLL_INTERVAL not in entry.options
+    assert entry.runtime_data.properties_cache_seconds == 10
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize(
+    ("stored", "expected"),
+    [
+        ("invalid", 10),
+        (5, 10),
+        (700, 600),
+        ("90", 90),
+    ],
+)
+def test_setup_clamps_stored_poll_interval(mock_client, stored, expected):
+    assert poll_cache_seconds({CONF_POLL_INTERVAL: stored}) == expected
+    assert poll_cache_seconds({}) == 10
